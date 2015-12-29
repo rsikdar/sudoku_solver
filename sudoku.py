@@ -1,4 +1,5 @@
 from tkinter import *
+import copy
 class Sudoku_box:
     def __init__(self):
         self.val = 0
@@ -18,12 +19,47 @@ class Sudoku_board:
         self.board = [[Sudoku_box() for x in range(9)] for x in range(9)] 
         self.rows = [{1, 2, 3, 4, 5, 6, 7, 8, 9} for x in range(9)]
         self.cols = [{1, 2, 3, 4, 5, 6, 7, 8, 9} for x in range(9)]
+        self.boxes = [{1, 2, 3, 4, 5, 6, 7, 8, 9} for x in range(9)]
+
+    def copy_board(self):
+        return copy.deepcopy(self)
+
+    def check_box(self, val, x, y):
+        box = self.get_box_number(x, y)
+        if val in self.boxes[box]:
+            return True
+        return False
+
+    def get_box_number(self, x, y):
+        if x <= 2:
+            if y <= 2:
+                return 0
+            elif y <= 5:
+                return 1
+            elif y <= 8:
+                return 2
+        elif x <= 5:
+            if y <= 2:
+                return 3
+            elif y <= 5:
+                return 4
+            elif y <= 8:
+                return 5
+        else:
+            if y <= 2:
+                return 6
+            elif y <= 5:
+                return 7
+            elif y <= 8:
+                return 8
 
     def set_val(self, val, x, y):
         if val in self.rows[x] and val in self.cols[y]:
             self.board[x][y].set_val(val)
             self.rows[x].remove(val)
             self.cols[y].remove(val)
+            box_num = self.get_box_number(x, y)
+            self.boxes[box_num].remove(val) 
             return 0
         else:
             return 1
@@ -45,40 +81,74 @@ class Sudoku_board:
                     print(self.board[i][j].val)
         return ""
 
-# def check_board(board):
-#   for i in range(board):
-#       for j in range(board[i]):
-#           if board[i][j].val
-
 def update_possible_values(board):
-    print('inside update')
-    print(board)
+    # # print('inside update')
+    # print(board)
     updates_made = 0
-    for i in range(len(board.board)):
-        for j in range(len(board.board[i])):
+    boxes_left = 0
+    for i in range(9):
+        for j in range(9):
             box = board.board[i][j]
             to_remove = []
             for x in box.possible_val:
-                if not (x in board.rows[i] and x in board.cols[j]):
+                if not (x in board.rows[i] and x in board.cols[j] and board.check_box(x, i, j)):
                     to_remove.append(x)
             updates_made += len(to_remove)
             for x in to_remove:
                 box.possible_val.remove(x)
             if len(box.possible_val) == 1 and box.val == 0:
-                # print(i, j)
                 val = box.possible_val.pop()
-                # print(val)
                 box.possible_val.add(val)   
                 board.set_val(val, i, j)
-    return updates_made
+            #conflict
+            elif len(box.possible_val) == 0 and box.val == 0:
+                return -1, -1
+            elif box.val == 0:
+                boxes_left += 1
+    return updates_made, boxes_left
 
+def sudoku_test_solvable(board):
+    #returns whether the board is possibly solvable, and how many values are left to solve
+    updates_made_temp = 1
+    # solvable = True
+    while updates_made_temp != 0:
+        updates_made_temp, boxes_left = update_possible_values(board)
+        if  updates_made_temp == -1:
+            return False, 0
+    return True, boxes_left
+
+def sudoku_guess_solve(board):
+    temp_board = board.copy_board()
+    for i in range(9):
+        for j in range(9):
+            box = board.board[i][j]
+            if box.val == 0:
+                for x in box.possible_val:
+                    temp_board.set_val(x, i, j)
+                    solvable, boxes_left_temp = sudoku_test_solvable(temp_board)
+                    if solvable and boxes_left_temp == 0:
+                        return temp_board
+                    elif solvable:
+                        ret_board = sudoku_guess_solve(temp_board)
+                        if ret_board == False:
+                            temp_board = board.copy_board()
+                        else:
+                            return ret_board
+                    else:
+                        temp_board = board.copy_board()
+    return False
 
 def sudoku_solve(board):
-    print("attempt")
-    updates_made = update_possible_values(board)
+    # print("attempt")
+    updates_made, boxes_left = update_possible_values(board)
     while (updates_made != 0):
-        updates_made = update_possible_values(board)
-    print(board)
+        updates_made,boxes_left = update_possible_values(board)
+    if boxes_left != 0:
+        #start guessing and checking for conflicts
+        ret_board = sudoku_guess_solve(board)
+        if ret_board != False:
+            return ret_board
+    # print(board)
     return board
 
 
@@ -171,7 +241,7 @@ class Example(Frame):
                 except ValueError:
                     self.display_err()
         board = sudoku_solve(board)
-        print(board)
+        # print(board)
         for i in range(9):
             for j in range(9):
                 self.board[i][j].delete(0, END)
