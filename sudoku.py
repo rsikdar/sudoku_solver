@@ -299,29 +299,6 @@ class Example(Frame):
                 box.pack(side=LEFT, padx=2, pady=0)
                 self.board[i][j] = box
 
-
-        # b1 = Entry(sudoku_frame, width=4)
-        # b1.pack(side=LEFT, padx=10, pady=2)
-
-
-  #       print_horizontal = True
-        # for i in range(9):
-        #   for j in range(9):
-        #       if j % 3 == 0 and j != 0:
-        #           print(" | ", end = " ")
-        #       if i % 3 == 0 and i != 0 and print_horizontal:
-        #           print("--------------------------")
-        #           print_horizontal = False
-        #       if i % 3 != 0:
-        #           print_horizontal = True
-        #       if j != 8:
-        #           print(self.board[i][j].val, end = " ")
-        #       else:
-        #           print(self.board[i][j].val)
-
-
-
-        
         quitButton = Button(self, text="Quit", command = self.quit)
         quitButton.pack(side=RIGHT, padx=5, pady=5)
         solveButton = Button(self, text="Solve", command = self.sudoku_solve_get_input)
